@@ -23,4 +23,9 @@ biological subsequences, sometimes perfection is out of reach.
 
 -------------------------------------------------------------------------------
 
+## Dev Notes ##
+
+`pelops` is designed as a single-file application with multiple functions. All
+of the libraries are vanilla Python: there are no external dependencies to
+manage.
 
