@@ -70,15 +70,44 @@ def shuffle_seq(seq, type="random", prob=0.01):
 	random.shuffle(dna)
 	return ''.join(dna)
 
-def nmutate_seq(seq, n):
-	"get a copy of a sequence, mutated at n positions"
-	assert(n <= len(seq))
+def nmutate_seq(seq, n=0, p=0):
+    "get a copy of a sequence, mutated at n positions"
+    assert(n <= len(seq))
+    dna = list(seq)
+    if n > 0:
+        for i in random.sample(range(len(seq)), n):
+            if   seq[i] == 'A': dna[i] = random.choice('CGT')
+            elif seq[i] == 'C': dna[i] = random.choice('AGT')
+            elif seq[i] == 'G': dna[i] = random.choice('ACT')
+            else:               dna[i] = random.choice('ACG')
+    elif p > 0:
+        for i in range(len(seq)):
+            if random.random() < p:
+                if   seq[i] == 'A': dna[i] = random.choice('CGT')
+                elif seq[i] == 'C': dna[i] = random.choice('AGT')
+                elif seq[i] == 'G': dna[i] = random.choice('ACT')
+                else:               dna[i] = random.choice('ACG')
+    return dna
+
+def frame_shift_seq(seq, n=0, p=0):
+	"insert or delete n random bases from a sequence if n provided"
+	"insert or delete random bases with probability p if n not provided"
+	nuc = ['A', 'C', 'G', 'T']
 	dna = list(seq)
-	for i in random.sample(range(len(seq)), n):
-		if   seq[i] == 'A': dna[i] = random.choice('CGT')
-		elif seq[i] == 'C': dna[i] = random.choice('AGT')
-		elif seq[i] == 'G': dna[i] = random.choice('ACT')
-		else:               dna[i] = random.choice('ACG')
+	if n > 0: 
+		for i in random.sample(range(len(seq)), n): 
+			if random.random() < 0.5: insert = True
+			else: insert = False
+			nuc_i = [j for j in nuc if j != seq[i]]
+			if insert == True: dna = dna[:i] + list(random.choice(nuc_i)) + dna[i:]
+			else: dna = dna[:i] + dna[i+1:]
+	elif p > 0:
+		for i in range(len(seq)):
+			if random.random() < 0.5: insert = True
+			else: insert = False
+			if random.random() < p:
+				if insert == True: dna = dna[:i] + list(random.choice(nuc)) + dna[i:]
+				else: dna = dna[:i] + dna[i+1:] 
 	return dna
 
 def ksample_seq(seq, k, flop=False):
