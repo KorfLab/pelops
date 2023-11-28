@@ -52,7 +52,7 @@ def count_kmers(seq, k, full=False, init=0):
 		kmer = seq[i:i+k]
 		if kmer not in kcount: kcount[kmer] = 0
 		kcount[kmer] += 1
-	
+
 	return kcount
 
 ## Sequence Utilities
@@ -64,14 +64,14 @@ def anti_seq(seq):
 	anti = seq.translate(comp)[::-1]
 	return anti
 
-def shuffle_seq(seq, type="random", prob=0.01):
+def shuffle_seq(seq):
 	"get a randomly shuffled copy of a sequence"
 	dna = list(seq)
 	random.shuffle(dna)
 	return ''.join(dna)
 
 def nmutate_seq(seq, n):
-	"get a copy of a sequence, mutated at n positions"
+	"get a copy of a sequence, with substitutions at n positions"
 	assert(n <= len(seq))
 	dna = list(seq)
 	for i in random.sample(range(len(seq)), n):
@@ -102,7 +102,7 @@ def compare(arg):
 
 def testing(arg):
 	"internal testing"
-	
+
 	if arg.kmers or arg.all:
 		print('kmers', end=': ')
 		seq = 'AAAAACCCCGGG'
