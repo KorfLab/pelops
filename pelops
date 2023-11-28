@@ -100,6 +100,7 @@ def nmutate_seq(seq, n):
 			else: dna = dna[:i] + dna[i+1:]
 	elif p > 0:
 		for i in range(len(seq)):
+			nuc_i = [j for j in nuc if j != seq[i]]
 			if random.random() < 0.5: insert = True
 			else: insert = False
 			if random.random() < p:
