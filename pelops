@@ -68,14 +68,6 @@ def shuffle_seq(seq, type="random", prob=0.01):
 	"get a randomly shuffled copy of a sequence"
 	dna = list(seq)
 	random.shuffle(dna)
-	nuc = ['A', 'C', 'G', 'T']
-	if type != "random":
-		for i in range(len(dna)):
-			if(random.random() < prob):
-				if type == "point": dna[i] = random.choice(nuc)					
-				elif type == "frame":
-					if random.random() < 0.5: dna = dna[:i] + random.choice(nuc) + dna[i:]
-					else: dna = dna[:i] + dna[i+1:]
 	return ''.join(dna)
 
 def nmutate_seq(seq, n):
