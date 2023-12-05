@@ -40,7 +40,7 @@ def read_fasta(filename):
 ## K-mer Functions
 
 def count_kmers(seq, k, full=False, init=0):
-	"get a table of kmer counts for a sequence with optional initial counts"
+	"""get a table of kmer counts for a sequence with optional initial counts"""
 	if full:
 		kcount = {}
 		for t in itertools.product('ACGT', repeat=k):
@@ -58,58 +58,62 @@ def count_kmers(seq, k, full=False, init=0):
 ## Sequence Utilities
 
 def anti_seq(seq):
-	"get the reverse-complement of a sequence"
+	"""get the reverse-complement of a sequence"""
 	comp = str.maketrans('ACGTRYMKWSBDHVacgtrymkwsbdhv',
 		'TGCAYRKMWSVHDBtgcayrkmwsvhdb')
 	anti = seq.translate(comp)[::-1]
 	return anti
 
 def shuffle_seq(seq):
-	"get a randomly shuffled copy of a sequence"
+	"""get a randomly shuffled copy of a sequence"""
 	dna = list(seq)
 	random.shuffle(dna)
 	return ''.join(dna)
 
-def frame_shift_seq(seq, n=0, p=0):
-	"insert or delete n random bases from a sequence if n provided"
-	"insert or delete random bases with probability p if n not provided"
+def frame_shift_seq(seq, n=0, p=0, insert=False):
+	"""if n provided, insert / delete n random bases from sequence, else mutate with probability p"""
 	nuc = ['A', 'C', 'G', 'T']
 	dna = list(seq)
-	for i in random.sample(range(len(seq)), n): 
-		if random.random() < 0.5: insert = True
-		else: insert = False
-		nuc_i = [j for j in nuc if j != seq[i]]
-		if n > 0:
-			if insert == True: dna = dna[:i] + list(random.choice(nuc_i)) + dna[i:]
-			else: dna = dna[:i] + dna[i+1:]
-		elif random.random() < p:
-			if insert == True: dna = dna[:i] + list(random.choice(nuc)) + dna[i:]
-			else: dna = dna[:i] + dna[i+1:] 
-	return "".join(dna)
-
-def nmutate_seq(seq, n):
-	"get a copy of a sequence, with substitutions at n positions"
-	assert(n <= len(seq))
-	dna = list(seq)
-	if n > 0: 
+	if n > 0:
 		for i in random.sample(range(len(seq)), n): 
-			if random.random() < 0.5: insert = True
-			else: insert = False
-			nuc_i = [j for j in nuc if j != seq[i]]
-			if insert == True: dna = dna[:i] + list(random.choice(nuc_i)) + dna[i:]
-			else: dna = dna[:i] + dna[i+1:]
+			if insert == True: 
+				if   seq[i] == 'A': dna.insert(i, random.choice('CGT'))
+				elif seq[i] == 'C': dna.insert(i, random.choice('AGT'))
+				elif seq[i] == 'G': dna.insert(i, random.choice('ACT'))
+				else:               dna.insert(i, random.choice('ACGs'))
+			else: dna.pop(i)
 	elif p > 0:
 		for i in range(len(seq)):
-			nuc_i = [j for j in nuc if j != seq[i]]
-			if random.random() < 0.5: insert = True
-			else: insert = False
-			if random.random() < p:
-				if insert == True: dna = dna[:i] + list(random.choice(nuc_i)) + dna[i:]
-				else: dna = dna[:i] + dna[i+1:] 
-	return dna
+			if random.random() > p:
+				if insert == True: 
+					if   seq[i] == 'A': dna.insert(i, random.choice('CGT'))
+					elif seq[i] == 'C': dna.insert(i, random.choice('AGT'))
+					elif seq[i] == 'G': dna.insert(i, random.choice('ACT'))
+					else:               dna.insert(i, random.choice('ACGs'))
+				else: dna.pop(i)
+	return "".join(dna)
+
+def nmutate_seq(seq, n=0, p=0):
+	"get a copy of a sequence, mutated at n positions"
+	assert(n <= len(seq))
+	dna = list(seq)
+	if n > 0:
+		for i in random.sample(range(len(seq)), n):
+			if   seq[i] == 'A': dna[i] = random.choice('CGT')
+			elif seq[i] == 'C': dna[i] = random.choice('AGT')
+			elif seq[i] == 'G': dna[i] = random.choice('ACT')
+			else:               dna[i] = random.choice('ACG')
+        elif p > 0:
+			for i in range(len(seq)):
+				if random.random() < p:
+					if   seq[i] == 'A': dna[i] = random.choice('CGT')
+					elif seq[i] == 'C': dna[i] = random.choice('AGT')
+					elif seq[i] == 'G': dna[i] = random.choice('ACT')
+					else:               dna[i] = random.choice('ACG')
+        return dna
 
 def ksample_seq(seq, k, flop=False):
-	"get a sequence via sampled kmers"
+	"""get a sequence via sampled kmers"""
 	dna = ''
 	while True:
 		i = random.randint(0, len(seq) -k)
@@ -128,7 +132,7 @@ def compare(arg):
 	print('comparing')
 
 def testing(arg):
-	"internal testing"
+	"""internal testing"""
 
 	if arg.kmers or arg.all:
 		print('kmers', end=': ')
