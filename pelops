@@ -146,8 +146,8 @@ def testing(arg):
 
 def benchmark(arg):
 	import time
-	seq = 'A' * 99
-	limit = 9999
+	seq = 'ACGT' * 99
+	limit = 999
 
 	# method 1: if-elif stack
 	t0 = time.time()
