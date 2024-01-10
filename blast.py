@@ -60,3 +60,7 @@ print(json.dumps(change, indent=4))
 # how to get gaps
 print(find_gaps(qa, sa))
 print(find_gaps(sa, qa))
+
+# note that this is a simple method that doesn't take into account the
+# phylogenetic relationships of the sequences: shared mutations will end
+# double counted or worse. we shouldn't model all changes as independent
