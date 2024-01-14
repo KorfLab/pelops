@@ -7,6 +7,8 @@ import json
 import re
 import sys
 import random
+import math
+import gzip
 
 ## File Functions
 
@@ -103,14 +105,15 @@ def nmutate_seq(seq, n=0, p=0):
 			elif seq[i] == 'C': dna[i] = random.choice('AGT')
 			elif seq[i] == 'G': dna[i] = random.choice('ACT')
 			else:               dna[i] = random.choice('ACG')
-        elif p > 0:
-			for i in range(len(seq)):
-				if random.random() < p:
-					if   seq[i] == 'A': dna[i] = random.choice('CGT')
-					elif seq[i] == 'C': dna[i] = random.choice('AGT')
-					elif seq[i] == 'G': dna[i] = random.choice('ACT')
-					else:               dna[i] = random.choice('ACG')
-        return dna
+	elif p > 0:
+		for i in range(len(seq)):
+			if random.random() < p:
+				if   seq[i] == 'A': dna[i] = random.choice('CGT')
+				elif seq[i] == 'C': dna[i] = random.choice('AGT')
+				elif seq[i] == 'G': dna[i] = random.choice('ACT')
+				else:               dna[i] = random.choice('ACG')
+	return dna
+
 
 def ksample_seq(seq, k, flop=False):
 	"""get a sequence via sampled kmers"""
@@ -123,6 +126,71 @@ def ksample_seq(seq, k, flop=False):
 		if len(dna) > len(seq): break
 	return dna[:len(seq)]
 
+def entropy_filter(seq, comp, threshold=0):
+	"""filter a sequence based on entropy (need to calculate composition of seq)"""
+	entropy = 0
+	for i in seq:
+		entropy += -1 * (comp[i] * math.log2(comp[i]))
+	if entropy > threshold:
+		return True
+	else: 
+		return False
+
+def align_seq(seq1, seq2, aln_threshold):
+	"""align 2 sequences and return True if they are similar enough"""
+	score = 0
+	for i, j in zip(seq1, seq2):
+		if i == j:
+			score += 1
+	if score/len(seq1) >= aln_threshold: return True
+	else: return False
+
+def find_orthologs(input_file, kmer_len = 5, aln_threshold=0.1, entropy_threshold=0):
+	""" compares sequences in file and finds patches of similarity"""
+	fasta_test = read_fasta(input_file)
+	kmer_list = {}
+	for i in fasta_test:
+		anti = anti_seq(i[1])
+		seq = i[1]
+		kmer_list[i[0]] = []
+
+		# break up seq and anti into kmers
+		# by sampling??
+		seq_kmer = []
+		for j in range(0, len(seq) - kmer_len + 1):
+			loc = random.randint(0, len(seq) - kmer_len + 1)
+			if random.random() < 0.5:
+				seq_kmer.append(seq[loc:loc+kmer_len])
+			else:
+				seq_kmer.append(anti[loc:loc+kmer_len])
+		
+		# entropy filter
+		seq_len = len(seq)
+		comp = {"A": seq.count("A")/seq_len + 1, 
+				"C": seq.count("C")/seq_len + 1, 
+				"G": seq.count("G")/seq_len + 1, 
+				"T": seq.count("T")/seq_len + 1}
+		num_removed = 0
+		for k in seq_kmer:
+			if not entropy_filter(k, comp, entropy_threshold): 
+				seq_kmer.remove(k)
+				num_removed += 1
+		print(f"{i[0]}: removed {num_removed} kmers")
+		kmer_list[i[0]] = seq_kmer
+
+	# align    
+	score = {}
+	for key, value in kmer_list.items():
+		score[key] = 0
+		for random_kmer in value:
+			### TO DO: find more efficient way of comparison ###
+			for key2, value2 in kmer_list.items():
+				if key2 != key:
+					for random_kmer2 in value2:
+						if align_seq(random_kmer, random_kmer2, aln_threshold):
+							### ADD WEIGHTS HERE ###
+							score[key] += 1
+	return score
 
 #################
 ## Subcommands ##
