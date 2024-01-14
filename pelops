@@ -13,7 +13,7 @@ import gzip
 ## File Functions
 
 def read_fasta(filename):
-
+	"""read fasta file one entry at a time"""
 	label = None
 	seq = []
 
@@ -77,8 +77,8 @@ def frame_shift_seq(seq, n=0, p=0, insert=False):
 	nuc = ['A', 'C', 'G', 'T']
 	dna = list(seq)
 	if n > 0:
-		for i in random.sample(range(len(seq)), n): 
-			if insert == True: 
+		for i in random.sample(range(len(seq)), n):
+			if insert == True:
 				if   seq[i] == 'A': dna.insert(i, random.choice('CGT'))
 				elif seq[i] == 'C': dna.insert(i, random.choice('AGT'))
 				elif seq[i] == 'G': dna.insert(i, random.choice('ACT'))
@@ -87,7 +87,7 @@ def frame_shift_seq(seq, n=0, p=0, insert=False):
 	elif p > 0:
 		for i in range(len(seq)):
 			if random.random() > p:
-				if insert == True: 
+				if insert == True:
 					if   seq[i] == 'A': dna.insert(i, random.choice('CGT'))
 					elif seq[i] == 'C': dna.insert(i, random.choice('AGT'))
 					elif seq[i] == 'G': dna.insert(i, random.choice('ACT'))
@@ -96,7 +96,7 @@ def frame_shift_seq(seq, n=0, p=0, insert=False):
 	return "".join(dna)
 
 def nmutate_seq(seq, n=0, p=0):
-	"get a copy of a sequence, mutated at n positions"
+	"""get a copy of a sequence, mutated at n positions"""
 	assert(n <= len(seq))
 	dna = list(seq)
 	if n > 0:
@@ -212,6 +212,39 @@ def testing(arg):
 		assert(h == 'f985dbb89ede64a80574d55810c7e577')
 		print('passed', h)
 
+def benchmark(arg):
+	import time
+	seq = 'ACGT' * 99
+	limit = 999
+
+	# method 1: if-elif stack
+	t0 = time.time()
+	for i in range(limit):
+		for nt in seq:
+			if   nt == 'A': s = random.choice('CGT')
+			elif nt == 'C': s = random.choice('AGT')
+			elif nt == 'G': s = random.choice('ACT')
+			else:           s = random.choice('ACG')
+
+	# method 2: list comprehension
+	t1 = time.time()
+	alph = 'ACGT'
+	for i in range(limit):
+		for nt in seq:
+			subs = [x for x in alph if x != nt]
+			s = random.choice(subs)
+
+	# method 3: dictionary
+	t2 = time.time()
+	sub = {'A': 'CGT', 'C': 'AGT', 'G': 'ACT',	'T': 'ACG'}
+	for i in range(limit):
+		for nt in seq:
+			s = random.choice(sub[nt])
+
+	t3 = time.time()
+	print(t1 - t0)
+	print(t2 - t1)
+	print(t3 - t2)
 
 #########
 ## CLI ##
@@ -238,6 +271,10 @@ parse_test.add_argument('--all', required=False, action='store_true')
 parse_test.add_argument('--kmers', required=False, action='store_true')
 parse_test.add_argument('--verbose', required=False, action='store_true')
 parse_test.set_defaults(func=testing)
+
+## benchmark sub-command
+parse_bench = sub.add_parser('bench', help='internal benchmarking')
+parse_bench.set_defaults(func=benchmark)
 
 
 ## execute sub-command ##
