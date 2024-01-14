@@ -121,7 +121,7 @@ def ksample_seq(seq, k, flop=False):
 	while True:
 		i = random.randint(0, len(seq) -k)
 		kmer = seq[i:i+k]
-		if flop and random.random() < 0.5: kmer = korflab.anti(kmer)
+		if flop and random.random() < 0.5: kmer = anti_seq(kmer)
 		dna += kmer
 		if len(dna) > len(seq): break
 	return dna[:len(seq)]
@@ -145,7 +145,7 @@ def align_seq(seq1, seq2, aln_threshold):
 	if score/len(seq1) >= aln_threshold: return True
 	else: return False
 
-def find_orthologs(input_file, kmer_len = 5, aln_threshold=0.1, entropy_threshold=0):
+def find_orthologs(input_file, kmer_len=5, aln_threshold=0.1, entropy_threshold=0):
 	""" compares sequences in file and finds patches of similarity"""
 	fasta_test = read_fasta(input_file)
 	kmer_list = {}
@@ -189,7 +189,7 @@ def find_orthologs(input_file, kmer_len = 5, aln_threshold=0.1, entropy_threshol
 					for random_kmer2 in value2:
 						if align_seq(random_kmer, random_kmer2, aln_threshold):
 							### ADD WEIGHTS HERE ###
-							score[key] += 1
+							score[key][key2] = score[key].get(key2, 0) + 1
 	return score
 
 #################
