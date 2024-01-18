@@ -26,6 +26,6 @@ genes = genes[:100]
 
 for gene in genes:
 	print(gene, file=sys.stderr)
-	for line in run(f'curl -X POST -d "strains={querystrains}&gids={querygenes}" https://tools.1001genomes.org/api/v1/pseudogenomes', shell=True, capture_output=True).stdout.decode().split('\n'):
+	for line in run(f'curl -X POST -d "strains={strains}&gids={genes}" https://tools.1001genomes.org/api/v1/pseudogenomes', shell=True, capture_output=True).stdout.decode().split('\n'):
 		print(line)
 		time.sleep(1)
