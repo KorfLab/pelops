@@ -21,11 +21,11 @@ with open(sys.argv[2]) as fp:
 		gene = l[0]
 		if gene.endswith('.1'): genes.append(gene)	
 
-strains = ",".join(strains[:100])
-genes = genes[:100]
+querystrains = ",".join(strains[:100])
+querygenes = genes[:100]
 
-for gene in genes:
+for gene in querygenes:
 	print(gene, file=sys.stderr)
-	for line in run(f'curl -X POST -d "strains={strains}&gids={genes}" https://tools.1001genomes.org/api/v1/pseudogenomes', shell=True, capture_output=True).stdout.decode().split('\n'):
+	for line in run(f'curl -X POST -d "strains={querystrains}&gids={gene}" https://tools.1001genomes.org/api/v1/pseudogenomes', shell=True, capture_output=True).stdout.decode().split('\n'):
 		print(line)
-		time.sleep(1)
+		time.sleep(0.5)
