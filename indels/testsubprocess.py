@@ -21,8 +21,8 @@ with open(sys.argv[2]) as fp:
 		gene = l[0]
 		if gene.endswith('.1'): genes.append(gene)	
 
-querystrains = ",".join(strains[:100])
-querygenes = genes[:100]
+strains = ",".join(strains[:100])
+genes = genes[:100]
 
 for gene in genes:
 	print(gene, file=sys.stderr)
