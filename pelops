@@ -9,6 +9,7 @@ import sys
 import random
 import math
 import gzip
+import itertools
 
 ## File Functions
 
@@ -145,52 +146,81 @@ def align_seq(seq1, seq2, aln_threshold):
 	if score/len(seq1) >= aln_threshold: return True
 	else: return False
 
-def find_orthologs(input_file, kmer_len=5, aln_threshold=0.1, entropy_threshold=0):
+def find_orthologs(input_file, kmer_len = 5, samples=1000, entropy_threshold=0, weights = "", order = 0):
 	""" compares sequences in file and finds patches of similarity"""
 	fasta_test = read_fasta(input_file)
 	kmer_list = {}
+	composition = {}
 	for i in fasta_test:
 		anti = anti_seq(i[1])
 		seq = i[1]
 		kmer_list[i[0]] = []
 
-		# break up seq and anti into kmers
-		# by sampling??
+		# break up seq and anti into kmers by sampling??
 		seq_kmer = []
-		for j in range(0, len(seq) - kmer_len + 1):
+		# for j in range(0, len(seq) - kmer_len + 1):
+		for j in range(samples):
 			loc = random.randint(0, len(seq) - kmer_len + 1)
 			if random.random() < 0.5:
 				seq_kmer.append(seq[loc:loc+kmer_len])
 			else:
 				seq_kmer.append(anti[loc:loc+kmer_len])
-		
+
 		# entropy filter
+		# should this come before / after sampling?
 		seq_len = len(seq)
-		comp = {"A": seq.count("A")/seq_len + 1, 
-				"C": seq.count("C")/seq_len + 1, 
-				"G": seq.count("G")/seq_len + 1, 
-				"T": seq.count("T")/seq_len + 1}
+		comp = {"A": (seq.count("A") + 1)/seq_len, 
+				"C": (seq.count("C") + 1)/seq_len, 
+				"G": (seq.count("G") + 1)/seq_len, 
+				"T": (seq.count("T") + 1)/seq_len}
+
 		num_removed = 0
 		for k in seq_kmer:
 			if not entropy_filter(k, comp, entropy_threshold): 
 				seq_kmer.remove(k)
 				num_removed += 1
+		composition[i[0]] = comp
 		print(f"{i[0]}: removed {num_removed} kmers")
-		kmer_list[i[0]] = seq_kmer
-
-	# align    
-	score = {}
-	for key, value in kmer_list.items():
-		score[key] = 0
-		for random_kmer in value:
-			### TO DO: find more efficient way of comparison ###
+		kmer_list[i[0]] += seq_kmer
+		composition[i[0]] = comp
+		if weights == "KL": # Kullback-Leibler divergence
+			# more divergence = more weight
+			# assuming that w/ similar seq compositions, similar kmers are expected
+			kl = {}
+			for key1, value1 in composition.items():
+				kl_divergence = 0
+				for key2, value2 in composition.items():
+					if key1 != key2:
+						for key3, value3 in value1.items():
+							kl_divergence += value3 * math.log2(value3 / value2[key3])
+						kl_divergence = kl_divergence / 2
+						kl[(key1,key2)] = kl_divergence
+					else:
+						kl[(key1,key2)] = 0
+		# align    
+		score = {}
+		temp = sum([i for i in kmer_list.values()], [])
+		kmer_summary = {i:temp.count(i) for i in set(temp)}
+		for key, value in kmer_list.items():
+			score[key] = {}
+			if order != 0: 
+				z1 = [i for i in itertools.permutations(value, order)]
 			for key2, value2 in kmer_list.items():
-				if key2 != key:
-					for random_kmer2 in value2:
-						if align_seq(random_kmer, random_kmer2, aln_threshold):
-							### ADD WEIGHTS HERE ###
-							score[key][key2] = score[key].get(key2, 0) + 1
-	return score
+				if weights == "":
+					score[key][key2] = math.log2(len(list(set(value) & set(value2)))) - math.log2(len(value) + len(value2))
+				else:
+					if weights == "KL":
+						weight = (kl[(key, key2)] + kl[(key2, key)]) / 2
+						if weight == 0: weight = 1 #???
+						score[key][key2] = math.log2(weight) + math.log2(len(list(set(value) & set(value2)))) - math.log2(len(value) + len(value2))
+					# Interactions (SUPER SLOW!!!)
+					if order != 0: 
+						z2 = [i for i in itertools.permutations(value2, order)]
+						score[key][key2] = math.log2(weight) + math.log2(len(list(set(z1) & set(z2))) - math.log2(len(z1) + len(z2)))
+		print(score)
+		return score
+
+
 
 #################
 ## Subcommands ##
